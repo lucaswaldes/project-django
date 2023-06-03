@@ -6,7 +6,7 @@ from .serializers import ProductSerializer
 
 class RepositoryProduct:
     def create_product(self, request):
-        if request.user.is_admin == True:
+        if request.user.is_admin == False:
             return request
         else: 
             return {"error": "You do not have permission to access this route."}

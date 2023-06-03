@@ -11,3 +11,6 @@ class Product(SoftDelete):
 		db_table = 'products'
 		verbose_name = 'Produto'
 		verbose_name_plural = 'Produtos'
+
+	def __str__(self):
+		return str(self.title)
