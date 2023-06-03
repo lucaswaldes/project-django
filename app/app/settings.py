@@ -26,7 +26,9 @@ SECRET_KEY = 'django-insecure-6gut6+%i3)@p=#($9+uveea2jrifzp7eqkh5hp)=_pp@j4ewup
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '*',
+]
 
 # Application definition
 
@@ -43,21 +45,56 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'dj_rest_auth',
+    "corsheaders",
 
     'products',
     'base',
-    'shop'
+    'shop',
+    'checkout',
+    'order'
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    'https://discord.com',
+    'http://localhost:8000',
+    "https://www.mercadopago.com.br",
+    "https://api.mercadopago.com"   # Adicione o domínio do seu frontend React aqui
+    # Outros domínios permitidos, se houver
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware", # middleware for cors-headers
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'checkout.middleware.disable_csrf_for_notification',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'discord.middleware.AuthenticationExpirationMiddleware',
 ]
+
+
+
+# MIDDLEWARE = [
+#     'django.middleware.security.SecurityMiddleware',
+#     'django.contrib.sessions.middleware.SessionMiddleware',
+#     'corsheaders.middleware.CorsMiddleware',
+
+#     'django.middleware.common.CommonMiddleware',
+#     'django.middleware.csrf.CsrfViewMiddleware',
+#     'django.contrib.auth.middleware.AuthenticationMiddleware',
+#     'django.contrib.messages.middleware.MessageMiddleware',
+#     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#     'social_django.middleware.SocialAuthExceptionMiddleware',
+# ]
+
+
+
+
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'app.urls'
 
@@ -72,6 +109,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect'
             ],
         },
     },
@@ -82,6 +121,9 @@ WSGI_APPLICATION = 'app.wsgi.application'
 DRF_ACCESS_POLICY = {"reusable_conditions": ["core.global_access_conditions"]}
 
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_EXPOSE_HEADERS = ['Access-Control-Allow-Origin']
+
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
@@ -137,7 +179,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
+
 
 USE_I18N = True
 

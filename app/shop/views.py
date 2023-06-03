@@ -5,13 +5,14 @@ from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from products.models import Product
 
 from .models import Shop
 
 class ShopSerializer(serializers.ModelSerializer):
-	total = serializers.IntegerField()
+	# total = serializers.IntegerField()
 
 	class Meta:
 		model = Shop
@@ -20,7 +21,8 @@ class ShopSerializer(serializers.ModelSerializer):
 class ShopViewSet(viewsets.ModelViewSet):
 	queryset = Shop.objects.all()
 	serializer_class = ShopSerializer
-    
+	permission_classes = [IsAuthenticated]
+
 	def create(self, request, *args, **kwargs):
 		queryset = Shop.objects.filter(user=request.user.uuid)
 

@@ -11,7 +11,21 @@ class AuthenticationBackend(BaseBackend):
             new_user = DiscordUser.objects.create_new_discord_user(user)
             # print(new_user)
             return new_user
-        return find_user
+        
+        existing_user = find_user[0]
+        # Atualizar informações no banco de dados, se necessário
+   
+        if existing_user.avatar != user['avatar']:
+            existing_user.avatar = user['avatar']
+        if existing_user.username != user['username']:
+            existing_user.username = user['username']
+        if existing_user.email != user['email']:
+            existing_user.email = user['email']
+        if existing_user.discord_tag != '%s#%s' % (user['username'], user['discriminator']):
+            existing_user.discord_tag = '%s#%s' % (user['username'], user['discriminator'])
+        existing_user.save() 
+        
+        return existing_user
 
     def get_user(self, user_id):
         try:

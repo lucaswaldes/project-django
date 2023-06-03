@@ -10,6 +10,10 @@ from django.contrib.auth.models import (
 import uuid
 import datetime
 
+from django.utils import timezone
+from datetime import timedelta
+import pytz
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -59,7 +63,7 @@ class CustomUserManager(BaseUserManager):
 class DiscordUser(AbstractUser):
     
     uuid = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
-    discord_id = models.BigIntegerField(null=True, blank=True)
+    discord_id = models.CharField(max_length=100, null=True, blank=True, unique=False)
     discord_tag = models.CharField(max_length=100, null=True, blank=True, unique=False)
     email = models.EmailField(("email address"), blank=False, unique=True)
     avatar = models.CharField(max_length=100, null=True, blank=True)
@@ -70,6 +74,8 @@ class DiscordUser(AbstractUser):
     is_admin = models.BooleanField(default=False)
     token = models.CharField(max_length=500)
     auth_provider = models.CharField(max_length=50)
+    last_login = models.DateTimeField(default=timezone.now)
+
 
     objects = CustomUserManager()
 
@@ -84,3 +90,9 @@ class DiscordUser(AbstractUser):
 
     def has_module_perms(self, app_label):
             return self.is_admin
+
+    # def is_login_expired(self):
+    #     expiration_time = self.last_login + timedelta(minutes=2)
+    #     current_time = timezone.now()
+    #     expiration_time_fixed = expiration_time - timedelta(hours=3)  # Ajuste de deslocamento de tempo fixo (exemplo: -03:00)
+    #     return current_time > expiration_time_fixed
