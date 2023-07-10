@@ -12,9 +12,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
-
     def list(self, request, *args, **kwargs):
-        queryset = Order.objects.filter(user=request.user)
+        queryset = Order.objects.filter(user=request.user).filter(status=True)
         serializer = self.get_serializer(queryset, many=True)
 
         return Response(serializer.data)
+
+
+class OrderViewSetAdmin(viewsets.ModelViewSet):
+    queryset = Order.objects.all().filter(deleted=False)
+    serializer_class = OrderSerializer
+    permission_classes = [IsAdminUser]

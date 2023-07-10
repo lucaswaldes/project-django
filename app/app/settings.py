@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'dj_rest_auth',
     "corsheaders",
+    'django_crontab',
+
 
     'products',
     'base',
@@ -216,7 +218,7 @@ REST_AUTH = {
     'JWT_AUTH_REFRESH_COOKIE': 'refresh-token',
     'JWT_AUTH_HTTPONLY':False,
     "JWT_TOKEN_CLAIMS_SERIALIZER": "app.jwt_serializer.CustomTokenObtainPairSerializer",
-    'JWT_SERIALIZER_WITH_EXPIRATION': "app.jwt_serializer.CustomJWTSerializer",
+    # 'JWT_SERIALIZER_WITH_EXPIRATION': "app.jwt_serializer.CustomJWTSerializer",
     'JWT_AUTH_RETURN_EXPIRATION': True
 
 }
@@ -242,3 +244,8 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_URL = 'http://localhost:8000/auth/login'
 # LOGIN_REDIRECT_URL = 'http://localhost:8000/api/user'
 # LOGOUT_REDIRECT_URL = 'home'
+
+
+CRONJOBS = [
+    ('* * * * * */10', 'app.cron.payment_status_check_job')  # Substitua 'nomedoprojeto' pelo nome do seu projeto Django
+]

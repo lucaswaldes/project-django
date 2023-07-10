@@ -1,53 +1,96 @@
 import requests
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
+from rest_framework import viewsets, mixins
+from rest_framework import generics
 
-@api_view(['POST'])
-def create_payment(request):
-    access_token = 'TEST-335553357611407-080122-942398a1221823ef28e369332a6ddffe-628278408'
+from order.models import Order
+from order.serializers import OrderSerializer
 
-    url = 'https://api.mercadopago.com/checkout/preferences'
+from .serializers import CheckoutSerializer
+import time
+from concurrent.futures import ThreadPoolExecutor
 
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + access_token
-    }
+class CheckoutViewSet(
+                  mixins.CreateModelMixin,
+                  viewsets.GenericViewSet
+                  ):
+    queryset = Order.objects.all()
+    serializer_class = CheckoutSerializer
 
-    # notification_url = request.build_absolute_uri('/api/notification/')
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        access_token = 'TEST-335553357611407-080122-942398a1221823ef28e369332a6ddffe-628278408'
+        url = 'https://api.mercadopago.com/checkout/preferences'
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + access_token
+        }
+
+        data = {
+            "items": [
+                {
+                    "title": request.data["title"],
+                    "quantity": 1,
+                    "currency_id": "BRL",
+                    "unit_price": int(request.data["value"])
+                }
+            ],
+            "back_urls": {
+                "success": "http://localhost:5173/dashboard",
+                "failure": "http://localhost:5173/shop",
+                "pending": "http://localhost:5173/shop"
+            },
+            "auto_return": "approved",
+            "notification_url": "https://2c8b-2804-1b3-a3c1-1111-987b-ad20-d492-ce35.ngrok-free.app/api/notification/"
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+        response_data = response.json()
 
 
-    data = {
-        "items": [
-            {
-                "title": request.data["title"],
-                "quantity": 1,
-                "currency_id": "BRL",
-                "unit_price": request.data["value"]
+        payment_link = response_data.get('init_point')
+
+        # Iniciar a verificação do status do pagamento
+        self.check_payment_status_async(response_data['id'])
+
+        return Response({'payment_link': payment_link})
+
+    def check_payment_status_async(self, preference_id):
+        executor = ThreadPoolExecutor()
+        executor.submit(self.check_payment_status, preference_id)
+
+    def check_payment_status(self, preference_id):
+        access_token = 'TEST-335553357611407-080122-942398a1221823ef28e369332a6ddffe-628278408'
+        while True:
+            url = f"https://api.mercadopago.com/checkout/preferences/{preference_id}"
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + access_token
             }
-        ],
-        # "payer": {
-        #     "email": request.data["email"]
-        # },
-        "back_urls": {
-            "success": "http://localhost:5173/dashboard",
-            "failure": "http://localhost:5173/shop",
-            "pending": "http://localhost:5173/shop"
-        },
-        "auto_return": "approved",
-        "notification_url": "https://2c8b-2804-1b3-a3c1-1111-987b-ad20-d492-ce35.ngrok-free.app/api/notification/"
-    }
 
-    response = requests.post(url, headers=headers, json=data)
-    response_data = response.json()
+            response = requests.get(url, headers=headers)
+            response_data = response.json()
 
-    payment_link = response_data.get('init_point')
+            # Verificar se o pagamento foi aprovado
+            status = response_data.get('status')
+            status_detail = response_data.get('status_detail')
 
-    return Response({'payment_link': payment_link})
+            print('teste')
+            if status == 'approved' and status_detail == 'accredited':
+                print(f"Um pagamento via boleto foi aprovado: {preference_id}")
+                break
+
+            # Aguardar alguns segundos antes de fazer a próxima verificação
+            time.sleep(10)
 
 
 @api_view(['POST'])
